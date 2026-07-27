@@ -1,3 +1,24 @@
+
+_api = None
+
+def _get_option(key, default=None):
+    global _api
+    if _api and hasattr(_api, "plugin_config"):
+        try:
+            val = __get_option(key)
+            if val is not None:
+                return val
+        except Exception:
+            pass
+    if hasattr(config, "setting"):
+        try:
+            val = config.setting[key]
+            if val is not None:
+                return val
+        except Exception:
+            pass
+    return default
+
 _api = None
 from picard.config import config
 from picard import log
