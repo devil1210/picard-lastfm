@@ -1,0 +1,11 @@
+uuid = "4c5d6e7f-8a9b-0c1d-2e3f-4a5b6c7d8e9f"
+name = "Last.fm"
+version = "1.0.0"
+authors = ['MusicBrainz Contributors']
+description = "Fetches tags and genres from Last.fm."
+categories = ['metadata', 'ui']
+homepage = "https://github.com/musicbrainz/picard-plugins/tree/2.0/plugins/lastfm"
+report_bugs_to = "https://github.com/musicbrainz/picard-plugins/tree/2.0/plugins/lastfm"
+api = ["3.0"]
+license = "GPL-2.0-or-later"
+license_url = "https://www.gnu.org/licenses/gpl-2.0.html"
