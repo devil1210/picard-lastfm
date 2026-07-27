@@ -1,3 +1,4 @@
+_api = None
 from picard.config import config
 from picard import log
 # -*- coding: utf-8 -*-
@@ -232,6 +233,8 @@ class LastfmOptionsPage(OptionsPage):
 
 
 def enable(api: PluginApi):
+    global _api
+    _api = api
     """Called when plugin is enabled."""
     api.plugin_config.register_option("lastfm_use_track_tags", True)
     api.plugin_config.register_option("lastfm_use_artist_tags", True)
