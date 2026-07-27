@@ -209,38 +209,26 @@ class LastfmOptionsPage(OptionsPage):
     TITLE = "Last.fm"
     PARENT = "plugins"
 
-
-    def __init__(self, parent=None, api=None):
-        super(LastfmOptionsPage, self).__init__(parent)
-        self.api = api
+    def __init__(self, parent=None):
         super(LastfmOptionsPage, self).__init__(parent)
         self.ui = Ui_LastfmOptionsPage()
         self.ui.setupUi(self)
 
-    def _get_cfg(self):
-        if hasattr(self, 'api') and self.api and hasattr(self.api, 'plugin_config'):
-            return self.api.plugin_config
-        if hasattr(self, 'api') and self.api and hasattr(self.api, 'global_config'):
-            return self.api.global_config.setting
-        return config.setting
-
     def load(self):
-        cfg = self._get_cfg()
-        self.ui.use_track_tags.setChecked(bool(cfg.get("lastfm_use_track_tags", True) if hasattr(cfg, "get") else cfg["lastfm_use_track_tags"]))
-        self.ui.use_artist_tags.setChecked(bool(cfg.get("lastfm_use_artist_tags", True) if hasattr(cfg, "get") else cfg["lastfm_use_artist_tags"]))
-        self.ui.min_tag_usage.setValue(int(cfg.get("lastfm_min_tag_usage", 90) if hasattr(cfg, "get") else cfg["lastfm_min_tag_usage"]))
-        self.ui.ignore_tags.setText(str(cfg.get("lastfm_ignore_tags", "") if hasattr(cfg, "get") else cfg["lastfm_ignore_tags"]))
-        self.ui.join_tags.setEditText(str(cfg.get("lastfm_join_tags", "") if hasattr(cfg, "get") else cfg["lastfm_join_tags"]))
+        self.ui.use_track_tags.setChecked(self.api.plugin_config["lastfm_use_track_tags"])
+        self.ui.use_artist_tags.setChecked(self.api.plugin_config["lastfm_use_artist_tags"])
+        self.ui.min_tag_usage.setValue(self.api.plugin_config["lastfm_min_tag_usage"])
+        self.ui.ignore_tags.setText(self.api.plugin_config["lastfm_ignore_tags"])
+        self.ui.join_tags.setEditText(self.api.plugin_config["lastfm_join_tags"])
 
     def save(self):
         global _cache
-        cfg = self._get_cfg()
         _cache = {}
-        cfg["lastfm_use_track_tags"] = self.ui.use_track_tags.isChecked()
-        cfg["lastfm_use_artist_tags"] = self.ui.use_artist_tags.isChecked()
-        cfg["lastfm_min_tag_usage"] = self.ui.min_tag_usage.value()
-        cfg["lastfm_ignore_tags"] = str(self.ui.ignore_tags.text())
-        cfg["lastfm_join_tags"] = str(self.ui.join_tags.currentText())
+        self.api.plugin_config["lastfm_use_track_tags"] = self.ui.use_track_tags.isChecked()
+        self.api.plugin_config["lastfm_use_artist_tags"] = self.ui.use_artist_tags.isChecked()
+        self.api.plugin_config["lastfm_min_tag_usage"] = self.ui.min_tag_usage.value()
+        self.api.plugin_config["lastfm_ignore_tags"] = str(self.ui.ignore_tags.text())
+        self.api.plugin_config["lastfm_join_tags"] = str(self.ui.join_tags.currentText())
 
 
 def enable(api: PluginApi):
