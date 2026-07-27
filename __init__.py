@@ -66,6 +66,9 @@ TITLE_CASE = True
 
 
 def parse_ignored_tags(ignore_tags_setting):
+    """Parse setting value into list of strings and compiled regexes."""
+    if not ignore_tags_setting:
+        return []
     ignore_tags = []
     for tag in ignore_tags_setting.lower().split(','):
         tag = tag.strip()
@@ -203,14 +206,33 @@ def get_artist_tags(album, metadata, artist, min_usage,
     get_tags(album, metadata, queryargs, min_usage, ignore, next_, current)
 
 
-def process_track(api, track, metadata, track_node, release_node):
-    use_track_tags = config.setting['lastfm_use_track_tags']
-    use_artist_tags = config.setting['lastfm_use_artist_tags']
-    min_tag_usage = config.setting['lastfm_min_tag_usage']
-    ignore_tags = parse_ignored_tags(config.setting['lastfm_ignore_tags'])
+def process_track(*args, **kwargs):
+    track = None
+    metadata = None
+    for a in args:
+        if hasattr(a, 'album') and (hasattr(a, 'files') or hasattr(a, 'linked_files')):
+            track = a
+        elif hasattr(a, 'getall') or (isinstance(a, dict) and 'artist' in a):
+            metadata = a
+    if not metadata or not track:
+        return
+    album = getattr(track, 'album', None)
+    if not album:
+        return
+
+    use_track_tags = _get_option('lastfm_use_track_tags', True)
+    use_artist_tags = _get_option('lastfm_use_artist_tags', True)
+    min_tag_usage = _get_option('lastfm_min_tag_usage', 90)
+    raw_ignore = _get_option('lastfm_ignore_tags', 'seen live, favorites, /\\d+ of \\d+ stars/')
+    ignore_tags = parse_ignored_tags(raw_ignore)
+    
     if use_track_tags or use_artist_tags:
-        artist = metadata["artist"]
-        title = metadata["title"]
+        artist = metadata.get("artist")
+        title = metadata.get("title")
+        if isinstance(artist, list) and artist:
+            artist = artist[0]
+        if isinstance(title, list) and title:
+            title = title[0]
         if artist:
             if use_artist_tags:
                 get_artist_tags_func = partial(get_artist_tags, album,
@@ -225,6 +247,7 @@ def process_track(api, track, metadata, track_node, release_node):
                 get_artist_tags_func([])
 
 
+
 class LastfmOptionsPage(OptionsPage):
 
     NAME = "lastfm"
@@ -237,20 +260,30 @@ class LastfmOptionsPage(OptionsPage):
         self.ui.setupUi(self)
 
     def load(self):
-        self.ui.use_track_tags.setChecked(self.api.plugin_config["lastfm_use_track_tags"])
-        self.ui.use_artist_tags.setChecked(self.api.plugin_config["lastfm_use_artist_tags"])
-        self.ui.min_tag_usage.setValue(self.api.plugin_config["lastfm_min_tag_usage"])
-        self.ui.ignore_tags.setText(self.api.plugin_config["lastfm_ignore_tags"])
-        self.ui.join_tags.setEditText(self.api.plugin_config["lastfm_join_tags"])
+        self.ui.use_track_tags.setChecked(bool(_get_option("lastfm_use_track_tags", True)))
+        self.ui.use_artist_tags.setChecked(bool(_get_option("lastfm_use_artist_tags", True)))
+        self.ui.min_tag_usage.setValue(int(_get_option("lastfm_min_tag_usage", 90)))
+        self.ui.ignore_tags.setText(str(_get_option("lastfm_ignore_tags", 'seen live, favorites, /\\d+ of \\d+ stars/')))
+        self.ui.join_tags.setEditText(str(_get_option("lastfm_join_tags", '')))
 
     def save(self):
         global _cache
         _cache = {}
-        self.api.plugin_config["lastfm_use_track_tags"] = self.ui.use_track_tags.isChecked()
-        self.api.plugin_config["lastfm_use_artist_tags"] = self.ui.use_artist_tags.isChecked()
-        self.api.plugin_config["lastfm_min_tag_usage"] = self.ui.min_tag_usage.value()
-        self.api.plugin_config["lastfm_ignore_tags"] = str(self.ui.ignore_tags.text())
-        self.api.plugin_config["lastfm_join_tags"] = str(self.ui.join_tags.currentText())
+        cfg_map = {
+            "lastfm_use_track_tags": self.ui.use_track_tags.isChecked(),
+            "lastfm_use_artist_tags": self.ui.use_artist_tags.isChecked(),
+            "lastfm_min_tag_usage": self.ui.min_tag_usage.value(),
+            "lastfm_ignore_tags": str(self.ui.ignore_tags.text()),
+            "lastfm_join_tags": str(self.ui.join_tags.currentText()),
+        }
+        if hasattr(self, 'api') and self.api and hasattr(self.api, 'plugin_config'):
+            for k, v in cfg_map.items():
+                try: self.api.plugin_config[k] = v
+                except Exception: pass
+        if hasattr(config, "setting"):
+            for k, v in cfg_map.items():
+                try: config.setting[k] = v
+                except Exception: pass
 
 
 def enable(api: PluginApi):
