@@ -106,11 +106,14 @@ def _tags_finalize(album, metadata, tags, next_):
             metadata["genre"] = tags
 
 
-def _tags_downloaded(album, metadata, min_usage, ignore, next_, current, data,
-                     reply, error):
+def _tags_downloaded(album, metadata, min_usage, ignore, next_, current,
+                     data, reply, error):
     if error:
-        album._requests -= 1
-        album._finalize_loading(None)
+        if _api and hasattr(_api, 'complete_album_task'):
+            _api.complete_album_task(album)
+        else:
+            album._requests -= 1
+            album._finalize_loading(None)
         return
 
     try:
@@ -147,8 +150,11 @@ def _tags_downloaded(album, metadata, min_usage, ignore, next_, current, data,
     except Exception:
         log.error('Problem processing download tags', exc_info=True)
     finally:
-        album._requests -= 1
-        album._finalize_loading(None)
+        if _api and hasattr(_api, 'complete_album_task'):
+            _api.complete_album_task(album)
+        else:
+            album._requests -= 1
+            album._finalize_loading(None)
 
 
 def get_tags(album, metadata, queryargs, min_usage, ignore, next_, current):
@@ -165,13 +171,19 @@ def get_tags(album, metadata, queryargs, min_usage, ignore, next_, current):
                         ignore, next_, current))
         else:
             _pending_requests[url] = []
-            album._requests += 1
-            album.tagger.webservice.get(
-                LASTFM_HOST, LASTFM_PORT, LASTFM_PATH,
-                partial(_tags_downloaded, album, metadata, min_usage, ignore,
-                        next_, current),
+            if _api and hasattr(_api, 'add_album_task'):
+                _api.add_album_task(album)
+            else:
+                album._requests += 1
+
+            full_url = f"https://{LASTFM_HOST}{LASTFM_PATH}"
+            album.tagger.webservice.get_url(
+                method="GET",
+                url=full_url,
+                handler=partial(_tags_downloaded, album, metadata, min_usage, ignore,
+                                next_, current),
                 queryargs=queryargs, parse_response_type='xml',
-                priority=True, important=True)
+                priority=True, important=False, dont_log_status=(404,))
 
 
 def encode_str(s):
