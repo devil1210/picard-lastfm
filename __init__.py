@@ -183,7 +183,7 @@ def get_tags(album, metadata, queryargs, min_usage, ignore, next_, current):
                 handler=partial(_tags_downloaded, album, metadata, min_usage, ignore,
                                 next_, current),
                 queryargs=queryargs, parse_response_type='xml',
-                priority=True, important=False, dont_log_status=(404,))
+                priority=True, important=False)
 
 
 def encode_str(s):
