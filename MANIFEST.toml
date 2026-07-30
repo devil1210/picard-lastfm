@@ -1,6 +1,6 @@
 uuid = "15b02ff3-4a21-488b-98dc-4d8624213cae"
 name = "Last.fm"
-version = "1.0.0"
+version = "0.10.1"
 authors = ['MusicBrainz Contributors']
 description = "Fetches tags and genres from Last.fm."
 categories = ['metadata', 'ui']
