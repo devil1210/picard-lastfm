@@ -110,7 +110,7 @@ def _tags_downloaded(album, metadata, min_usage, ignore, next_, current,
                      data, reply, error):
     if error:
         if _api and hasattr(_api, 'complete_album_task'):
-            _api.complete_album_task(album)
+            _api.complete_album_task(album, f"lastfm_{id(album)}")
         else:
             album._requests -= 1
             album._finalize_loading(None)
@@ -151,7 +151,7 @@ def _tags_downloaded(album, metadata, min_usage, ignore, next_, current,
         log.error('Problem processing download tags', exc_info=True)
     finally:
         if _api and hasattr(_api, 'complete_album_task'):
-            _api.complete_album_task(album)
+            _api.complete_album_task(album, f"lastfm_{id(album)}")
         else:
             album._requests -= 1
             album._finalize_loading(None)
@@ -172,9 +172,10 @@ def get_tags(album, metadata, queryargs, min_usage, ignore, next_, current):
         else:
             _pending_requests[url] = []
             if _api and hasattr(_api, 'add_album_task'):
-                _api.add_album_task(album)
+                _api.add_album_task(album, f"lastfm_{id(album)}", "Fetching Last.fm tags")
             else:
                 album._requests += 1
+
 
             full_url = f"https://{LASTFM_HOST}{LASTFM_PATH}"
             album.tagger.webservice.get_url(
